@@ -1,0 +1,26 @@
+{
+  "name": "m-a-s-system-",
+  "version": "1.0.0",
+  "description": "\"project\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"(no tests yet)\"",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MichelineWL/M-A-S-System-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MichelineWL/M-A-S-System-/issues"
+  },
+  "homepage": "https://github.com/MichelineWL/M-A-S-System-#readme",
+  "devDependencies": {
+    "@commitlint/config-conventional": "^20.3.1",
+    "commitlint": "^20.3.1",
+    "husky": "^8.0.0"
+  }
+}
