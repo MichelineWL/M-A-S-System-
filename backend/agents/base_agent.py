@@ -4,7 +4,7 @@ Base agent class with common functionality.
 
 from abc import ABC, abstractmethod
 from typing import Any, Optional
-import google.generativeai as genai
+from google import genai
 
 from config import settings
 from utils.logger import logger
@@ -13,14 +13,11 @@ from utils.logger import logger
 class BaseAgent(ABC):
     """Abstract base class for all agents."""
     
-    def __init__(self, system_prompt: str, model_name: str = "gemini-2.5-flash"):
+    def __init__(self, system_prompt: str, model_name: str = "gemini-1.5-flash"):
         """Initialize base agent."""
         self.system_prompt = system_prompt
         self.model_name = model_name
-        
-        # Configure Gemini API
-        genai.configure(api_key=settings.gemini_api_key)
-        self.model = genai.GenerativeModel(model_name)
+        self.client = genai.Client(api_key=settings.gemini_api_key)
         
         logger.info(f"Initialized {self.__class__.__name__} with model {model_name}")
     
@@ -40,11 +37,16 @@ class BaseAgent(ABC):
         
         return "\n".join(prompt_parts)
     
-    async def _call_gemini(self, prompt: str) -> str:
+    async def _call_gemini(self, prompt: str, model_name: Optional[str] = None) -> str:
         """Call Google Gemini API with the given prompt."""
         try:
-            logger.debug(f"{self.__class__.__name__} calling Gemini API...")
-            response = self.model.generate_content(prompt)
+            model = model_name or self.model_name
+            logger.debug(f"{self.__class__.__name__} calling Gemini API with model: {model}...")
+            
+            response = self.client.models.generate_content(
+                model=model,
+                contents=prompt
+            )
             
             if not response or not response.text:
                 raise ValueError("Empty response from Gemini API")

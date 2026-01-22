@@ -10,7 +10,7 @@ numpy>=1.26.0
 
 # AI & Agent System
 pandasai>=2.0.0
-google-generativeai>=0.3.2
+google-genai>=0.1.0
 
 # Visualization
 plotly>=5.18.0

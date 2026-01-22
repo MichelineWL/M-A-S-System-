@@ -63,6 +63,7 @@ class QueryRequest(BaseModel):
     """Request to query the data."""
     session_id: str
     query: str
+    model_name: Optional[str] = "gemini-1.5-flash"  # Default model
 
 
 class VisualizationData(BaseModel):
