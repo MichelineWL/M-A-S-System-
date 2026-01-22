@@ -10,6 +10,7 @@ export interface ExecutionStep {
 
 export interface ExecutionPlan {
   query_understanding: string;
+  thinking?: string;
   steps: ExecutionStep[];
   expected_output_type: string;
   requires_visualization: boolean;

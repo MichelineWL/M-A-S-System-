@@ -34,6 +34,7 @@ class ExecutionStep(BaseModel):
 class ExecutionPlan(BaseModel):
     """Planner agent's output structure."""
     query_understanding: str
+    thinking: Optional[str] = None  # Planner's reasoning/thinking process
     steps: List[ExecutionStep]
     expected_output_type: str  # e.g., "table", "chart", "text"
     requires_visualization: bool = False
