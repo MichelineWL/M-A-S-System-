@@ -17,8 +17,7 @@ class Settings(BaseSettings):
     # File Upload Settings
     max_file_size_mb: int = 10
     upload_dir: str = "./uploads"
-    allowed_extensions: List[str] = ["csv", "xlsx"]
-    
+    allowed_extensions: str = "csv,xlsx"    
     # Context Management
     context_window_size: int = 5
     
@@ -43,6 +42,11 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins into a list."""
         return [origin.strip() for origin in self.cors_origins.split(",")]
+
+    @property
+    def allowed_extensions_list(self) -> List[str]:
+        """Parse allowed extensions into a list."""
+        return [ext.strip() for ext in self.allowed_extensions.split(",")]
     
     def ensure_upload_dir(self):
         """Create upload directory if it doesn't exist."""

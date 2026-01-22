@@ -60,7 +60,7 @@ async def upload_file(file: UploadFile = File(...)):
         response = UploadResponse(
             session_id=session_id,
             filename=file.filename,
-            schema=schema
+            data_schema=schema
         )
         
         logger.info(f"File uploaded successfully: {session_id}")

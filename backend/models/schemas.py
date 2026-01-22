@@ -55,7 +55,7 @@ class UploadResponse(BaseModel):
     """Response after successful file upload."""
     session_id: str
     filename: str
-    schema: DataSchema
+    data_schema: DataSchema  
     message: str = "File uploaded successfully"
 
 

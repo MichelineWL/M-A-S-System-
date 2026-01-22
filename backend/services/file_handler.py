@@ -36,10 +36,10 @@ class FileHandler:
         """
         # Validate file extension
         file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
-        if file_ext not in settings.allowed_extensions:
+        if file_ext not in settings.allowed_extensions_list:
             raise HTTPException(
                 status_code=400,
-                detail=f"File type not supported. Allowed: {', '.join(settings.allowed_extensions)}"
+                detail=f"File type not supported. Allowed: {', '.join(settings.allowed_extensions_list)}"
             )
         
         # Read file content
