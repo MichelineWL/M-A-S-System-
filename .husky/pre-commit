@@ -1,4 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-echo "✅ Pre-commit hook passed!"
+# Pre-commit checks are now handled in commit-msg hook
+# This ensures commit message validation runs first, then linting
+echo "💬 Checking yo files b4 being pushed 2 GH"
