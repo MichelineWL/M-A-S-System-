@@ -1,0 +1,158 @@
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, User, Bot, Loader2, BarChart2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { api, ExecutionResult, Visualization } from '@/lib/api';
+import ChartRenderer from '@/components/ChartRenderer';
+import { cn } from '@/lib/utils';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  visualization?: Visualization;
+  timestamp: Date;
+}
+
+interface ChatInterfaceProps {
+  sessionId: string;
+}
+
+export default function ChatInterface({ sessionId }: ChatInterfaceProps) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: 'assistant',
+      content: "Hello! I've analyzed your data. Ask me anything about it, or tell me to create a chart! 📊",
+      timestamp: new Date()
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSend = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = input;
+    setInput('');
+    
+    // Add user message
+    setMessages(prev => [...prev, {
+      role: 'user',
+      content: userMessage,
+      timestamp: new Date()
+    }]);
+
+    setIsLoading(true);
+
+    try {
+      const response = await api.query(sessionId, userMessage);
+      
+      // Add AI response
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: response.result.answer,
+        visualization: response.result.visualization,
+        timestamp: new Date()
+      }]);
+    } catch (error) {
+      console.error('Query error:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "Sorry, I encountered an error processing your request.",
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-100px)] w-full max-w-4xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={cn(
+              "flex w-full",
+              msg.role === 'user' ? "justify-end" : "justify-start"
+            )}
+          >
+            <div
+              className={cn(
+                "flex max-w-[80%] md:max-w-[70%] rounded-lg px-4 py-3 shadow-sm",
+                msg.role === 'user' 
+                  ? "bg-primary text-primary-foreground ml-12" 
+                  : "bg-muted text-foreground mr-12"
+              )}
+            >
+              <div className="flex flex-col w-full gap-2">
+                <div className="flex items-center gap-2 mb-1 opacity-70 text-xs uppercase tracking-wider font-semibold">
+                  {msg.role === 'user' ? <User size={12} /> : <Bot size={12} />}
+                  <span>{msg.role === 'assistant' ? 'AI Analyst' : 'You'}</span>
+                </div>
+                
+                {/* Text Content */}
+                <div className="prose prose-invert max-w-none text-sm whitespace-pre-wrap leading-relaxed">
+                  {msg.content}
+                </div>
+
+                {/* Visualization */}
+                {msg.visualization && (
+                  <div className="mt-4 w-full">
+                    <ChartRenderer 
+                      data={msg.visualization.plotly_json} 
+                      title={msg.visualization.title} 
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+        
+        {isLoading && (
+          <div className="flex justify-start w-full">
+            <div className="bg-muted text-foreground rounded-lg px-4 py-3 mr-12 flex items-center gap-3">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Analyzing data...</span>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="p-4 bg-background/80 backdrop-blur-sm border-t border-border sticky bottom-0">
+        <form onSubmit={handleSend} className="relative flex items-center gap-2 max-w-4xl mx-auto">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask a question about your data..."
+            className="pr-12 py-6 text-base bg-secondary border-transparent focus:border-ring"
+            disabled={isLoading}
+          />
+          <Button 
+            type="submit" 
+            size="icon" 
+            disabled={!input.trim() || isLoading}
+            className="absolute right-2 h-8 w-8"
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+}
