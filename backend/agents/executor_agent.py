@@ -3,12 +3,12 @@ Executor Agent - Executes plans using PandasAI and generates results.
 """
 
 import pandas as pd
-from typing import Optional
+from typing import Optional, Any
 from pandasai import SmartDataframe
 from pandasai.llm import GoogleGemini
 
 from agents.base_agent import BaseAgent
-from models.schemas import ExecutionPlan, ExecutionResult
+from models.schemas import ExecutionPlan, ExecutionResult, VisualizationData
 from utils.prompts import EXECUTOR_SYSTEM_PROMPT
 from utils.logger import logger
 from config import settings
@@ -35,19 +35,26 @@ class ExecutorAgent(BaseAgent):
         
         try:
             # Use PandasAI to execute the query
-            answer = await self._execute_with_pandasai(df, original_query, plan)
+            answer, result_data = await self._execute_with_pandasai(df, original_query, plan)
+            
+            # Generate visualization if requested
+            visualization = None
+            if plan.requires_visualization and plan.visualization_type:
+                visualization = await self._generate_visualization(
+                    df, result_data, plan, original_query
+                )
             
             result = ExecutionResult(
                 success=True,
                 answer=answer,
                 code_executed="# Executed via PandasAI",
-                visualization=None,
+                visualization=visualization,  # ← Now can have chart data!
                 error=None
             )
             
             logger.info("Executor completed successfully")
             return result
-        
+            
         except Exception as e:
             logger.error(f"Executor error: {str(e)}")
             return ExecutionResult(
@@ -63,7 +70,7 @@ class ExecutorAgent(BaseAgent):
         df: pd.DataFrame,
         query: str,
         plan: ExecutionPlan
-    ) -> str:
+    ) -> tuple[str, Any]:
         """Execute query using PandasAI."""
         try:
             # Create SmartDataframe
@@ -83,8 +90,8 @@ class ExecutorAgent(BaseAgent):
             # Format result
             answer = self._format_result(result)
             
-            return answer
-        
+            return answer, result  # returns both answer and raw result
+            
         except Exception as e:
             logger.error(f"PandasAI execution error: {str(e)}")
             raise
@@ -97,6 +104,60 @@ class ExecutorAgent(BaseAgent):
             return f"**Answer:** {result:,.2f}" if isinstance(result, float) else f"**Answer:** {result:,}"
         else:
             return f"**Answer:** {str(result)}"
+
+    async def _generate_visualization(
+        self,
+        df: pd.DataFrame,
+        result_data: Any,
+        plan: ExecutionPlan,
+        query: str
+    ) -> Optional[VisualizationData]:
+        """Generate visualization based on plan."""
+        try:
+            from services.visualization_service import visualization_service
+            
+            # Use result data if it's a DataFrame, otherwise use original df
+            viz_df = result_data if isinstance(result_data, pd.DataFrame) else df
+            
+            # Get visualization type
+            viz_type = plan.visualization_type.lower()
+            
+            # Determine columns intelligently
+            numeric_cols = viz_df.select_dtypes(include=['number']).columns.tolist()
+            categorical_cols = viz_df.select_dtypes(include=['object']).columns.tolist()
+            
+            if not numeric_cols:
+                logger.warning("No numeric columns found for visualization")
+                return None
+            
+            # Create visualization based on type
+            if viz_type in ['bar', 'column']:
+                x_col = categorical_cols[0] if categorical_cols else viz_df.columns[0]
+                y_col = numeric_cols[0]
+                return visualization_service.create_bar_chart(
+                    df=viz_df.head(20),  # Limit to 20 rows for clarity
+                    x_col=x_col,
+                    y_col=y_col,
+                    title=plan.query_understanding
+                )
+            
+            elif viz_type == 'line':
+                x_col = viz_df.columns[0]
+                y_col = numeric_cols[0]
+                return visualization_service.create_line_chart(
+                    df=viz_df,
+                    x_col=x_col,
+                    y_col=y_col,
+                    title=plan.query_understanding
+                )
+            
+            else:
+                logger.info(f"Visualization type '{viz_type}' not yet implemented")
+                return None
+        
+        except Exception as e:
+            logger.error(f"Visualization generation error: {str(e)}")
+            return None
 
 
 # Global executor agent instance
