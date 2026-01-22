@@ -22,7 +22,8 @@ class PlannerAgent(BaseAgent):
         self,
         query: str,
         schema: DataSchema,
-        context: Optional[str] = None
+        context: Optional[str] = None,
+        model_name: Optional[str] = None
     ) -> ExecutionPlan:
         """Analyze query and create execution plan."""
         logger.info(f"Planner processing query: {query[:50]}...")
@@ -33,8 +34,8 @@ class PlannerAgent(BaseAgent):
         # Create prompt
         prompt = self._create_prompt(input_data, context)
         
-        # Call Gemini
-        response = await self._call_gemini(prompt)
+        # Call Gemini with specified model
+        response = await self._call_gemini(prompt, model_name)
         
         # Parse response into ExecutionPlan
         plan = self._parse_plan(response)

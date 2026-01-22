@@ -97,7 +97,8 @@ async def process_query(request: QueryRequest):
         plan = await planner_agent.process(
             query=request.query,
             schema=schema,
-            context=context if context_manager.has_context(request.session_id) else None
+            context=context if context_manager.has_context(request.session_id) else None,
+            model_name=request.model_name
         )
         
         # Log planner output
@@ -113,7 +114,8 @@ async def process_query(request: QueryRequest):
         result = await executor_agent.process(
             plan=plan,
             df=df,
-            original_query=request.query
+            original_query=request.query,
+            model_name=request.model_name
         )
         
         # Log executor output

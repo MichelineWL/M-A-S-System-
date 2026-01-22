@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Loader2, BarChart2 } from 'lucide-react';
+import { Send, User, Bot, Loader2, BarChart2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { api, ExecutionResult, Visualization } from '@/lib/api';
 import ChartRenderer from '@/components/ChartRenderer';
 import { cn } from '@/lib/utils';
+
+// Available Gemini models (Jan 2026 - Verified from Google AI Studio)
+const GEMINI_MODELS = [
+  { value: 'gemini-2.0-flash', label: '⚡ Gemini 2.0 Flash', description: '2K RPM, Unlimited RPD (Recommended)' },
+  { value: 'gemini-2.5-flash-lite', label: '🚀 Gemini 2.5 Flash Lite', description: '4K RPM, Unlimited RPD (Fastest)' },
+  { value: 'gemini-2.5-flash', label: '✨ Gemini 2.5 Flash', description: '1K RPM, High performance' },
+  { value: 'gemini-3-flash', label: '🔥 Gemini 3 Flash', description: '1K RPM, Latest generation' },
+  { value: 'gemini-2.5-pro', label: '💎 Gemini 2.5 Pro', description: '150 RPM, Most powerful' },
+];
 
 interface Message {
   role: 'user' | 'assistant';
@@ -31,6 +40,7 @@ export default function ChatInterface({ sessionId }: ChatInterfaceProps) {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('gemini-2.0-flash');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -58,7 +68,7 @@ export default function ChatInterface({ sessionId }: ChatInterfaceProps) {
     setIsLoading(true);
 
     try {
-      const response = await api.query(sessionId, userMessage);
+      const response = await api.query(sessionId, userMessage, selectedModel);
       
       // Add AI response
       setMessages(prev => [...prev, {
@@ -135,6 +145,23 @@ export default function ChatInterface({ sessionId }: ChatInterfaceProps) {
       </div>
 
       <div className="p-4 bg-background/80 backdrop-blur-sm border-t border-border sticky bottom-0">
+        {/* Model Selector */}
+        <div className="flex items-center gap-2 mb-3 max-w-4xl mx-auto">
+          <Sparkles className="w-4 h-4 text-primary" />
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            className="flex-1 px-3 py-2 text-sm bg-secondary border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+            disabled={isLoading}
+          >
+            {GEMINI_MODELS.map((model) => (
+              <option key={model.value} value={model.value}>
+                {model.label} - {model.description}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <form onSubmit={handleSend} className="relative flex items-center gap-2 max-w-4xl mx-auto">
           <Input
             value={input}
