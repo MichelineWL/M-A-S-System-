@@ -13,7 +13,7 @@ from utils.logger import logger
 class BaseAgent(ABC):
     """Abstract base class for all agents."""
     
-    def __init__(self, system_prompt: str, model_name: str = "gemini-pro"):
+    def __init__(self, system_prompt: str, model_name: str = "gemini-2.5-flash"):
         """Initialize base agent."""
         self.system_prompt = system_prompt
         self.model_name = model_name
